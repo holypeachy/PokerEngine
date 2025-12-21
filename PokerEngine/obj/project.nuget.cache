@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "DZsl/ZLwZ4c=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Peach\\Code\\PokerEngine\\PokerEngine\\PokerEngine.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Peach\\.nuget\\packages\\pokeralgo\\1.0.0\\pokeralgo.1.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

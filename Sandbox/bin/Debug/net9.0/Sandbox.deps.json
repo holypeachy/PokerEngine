@@ -1,0 +1,57 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "Sandbox/1.0.0": {
+        "dependencies": {
+          "PokerEngine": "1.0.0"
+        },
+        "runtime": {
+          "Sandbox.dll": {}
+        }
+      },
+      "PokerAlgo/1.0.0": {
+        "runtime": {
+          "lib/net6.0/PokerAlgo.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "PokerEngine/1.0.0": {
+        "dependencies": {
+          "PokerAlgo": "1.0.0"
+        },
+        "runtime": {
+          "PokerEngine.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Sandbox/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "PokerAlgo/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-N8LwgYBpZ1lPxZlLpUFlVrZ1SmZAjg5e/AMGyZ3ydMiuUqqh4ioyZaiTEAibWDkJIZY2RtFU6Z7dDArvXG2Bmg==",
+      "path": "pokeralgo/1.0.0",
+      "hashPath": "pokeralgo.1.0.0.nupkg.sha512"
+    },
+    "PokerEngine/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
