@@ -2,5 +2,5 @@ namespace PokerEngine;
 
 public interface IEngineIO
 {
-    void GetInput();
+    PlayerInput GetInput(GameState gameState);
 }
