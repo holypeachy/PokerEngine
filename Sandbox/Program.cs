@@ -4,7 +4,7 @@ class Program
 {
     static void Main()
     {
-        var engineOptions = new PokerEngineOptions { BuyIn = 1000, BigBlind = 50 };
+        var engineOptions = new PokerEngineOptions { BuyIn = 1000, BigBlind = 50, AdditionalRaises = 1};
         EngineIO io = new();
         PokerEngine engine = new(engineOptions, io);
         io.SetEngine(engine);
@@ -19,6 +19,7 @@ class Program
         ];
 
         engine.InitializeTable(playersInfo);
+        engine.StartHand();
         engine.StartHand();
     }
 }
@@ -37,5 +38,7 @@ TODO: Add detailed and standardized logging, log to file as well
 * 
 
 * Changes
-* 
+* feat: EnginePlayer no longer inherits from PokerAlgo.Player
+* feat: implement betting round loop
+* feat: add PotAlgo
 */
