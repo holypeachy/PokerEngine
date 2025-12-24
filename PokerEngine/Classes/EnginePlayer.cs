@@ -30,7 +30,7 @@ public class EnginePlayer
         HoleCards = new Pair(first, second);
     }
 
-    public void ResetTableHand()
+    public void ResetHand()
     {
         Bet = 0;
         HasActed = false;

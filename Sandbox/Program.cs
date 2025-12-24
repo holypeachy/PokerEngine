@@ -29,7 +29,10 @@ class Program
 ! 
 
 TODO
-TODO: Add detailed and standardized logging, log to file as well
+TODO: Add detailed and standardized logging, log to file as well. Deep engine logging.
+TODO: Add end hand and end game logic and reporting
+TODO: Implement replay functionality
+TODO: Unit and integration tests
 
 ? Future Ideas
 ? 

@@ -37,6 +37,8 @@ public class PokerEngine
 
     public void InitializeTable(List<PlayerInfo> playersInfo)
     {
+        if (playersInfo.Count < 2) throw new Exception("Not enough players");
+
         _players.Clear();
         _deck.ResetDeck();
         DealerIndex = -1;
@@ -51,45 +53,51 @@ public class PokerEngine
     {
         _deck.ResetDeck();
         CommunityCards.Clear();
-        AssignBlinds();
+        AdvanceBlinds();
 
         // Pre-flop
         Console.WriteLine("Pre-Flop");
         _players[SbIndex].MakeBlindBet(EngineOptions.BigBlind / 2);
         _players[BbIndex].MakeBlindBet(EngineOptions.BigBlind);
         CurrentBet = EngineOptions.BigBlind;
+
         foreach (var p in _players)
         {
             p.NewHand(_deck.NextCard(), _deck.NextCard());
         }
-        StartBettingRound();
-        CurrentPlayerIndex = GetNextBlindIndex(DealerIndex);
+
+        ExecuteBetting();
+        CurrentPlayerIndex = GetNextIndex(DealerIndex);
 
         // Flop
         Console.WriteLine("Flop");
         _deck.NextCard();
         if(!IsOnePlayerLeft) CommunityCards.AddRange(_deck.NextCards(3));
-        StartBettingRound();
-        CurrentPlayerIndex = GetNextBlindIndex(DealerIndex);
+        ExecuteBetting();
+        CurrentPlayerIndex = GetNextIndex(DealerIndex);
 
         // Turn
         Console.WriteLine("Turn");
         _deck.NextCard();
         if (!IsOnePlayerLeft) CommunityCards.Add(_deck.NextCard());
-        StartBettingRound();
-        CurrentPlayerIndex = GetNextBlindIndex(DealerIndex);
+        ExecuteBetting();
+        CurrentPlayerIndex = GetNextIndex(DealerIndex);
 
         // River
         Console.WriteLine("River");
         _deck.NextCard();
         if (!IsOnePlayerLeft) CommunityCards.Add(_deck.NextCard());
-        StartBettingRound();
+        ExecuteBetting();
 
-        Showdown();
-        ResetTableHand();
+        if (!IsOnePlayerLeft)
+        {
+            Showdown();
+        }
+
+        ResetHand();
     }
 
-    private void StartBettingRound()
+    private void ExecuteBetting()
     {
         if (IsOnePlayerLeft || IsSkipToShowdown) {
             if(IsSkipToShowdown) Console.WriteLine("Skip to showdown");
@@ -106,7 +114,7 @@ public class PokerEngine
                 // Before
                 if (currentPlayer.HasFolded || IsPlayerAllIn(currentPlayer))
                 {
-                    CurrentPlayerIndex = GetNextBlindIndex(CurrentPlayerIndex);
+                    CurrentPlayerIndex = GetNextIndex(CurrentPlayerIndex);
                     continue;
                 }
                 else if (CountNonFoldedPlayers() == 1)
@@ -115,20 +123,20 @@ public class PokerEngine
                     isBettingRoundOver = true;
                     break;
                 }
-                else if (CountPlayersThatCanAct() < 2 && EveryoneSettledAtCurrentBet())
+                else if (CountPlayersThatCanAct() < 2 && IsEveryoneSettledAtCurrentBet())
                 {
                     IsSkipToShowdown = true;
                     isBettingRoundOver = true;
                     break;
                 }
-                else if (HasEveryoneActed() && EveryoneSettledAtCurrentBet())
+                else if (HasEveryoneActed() && IsEveryoneSettledAtCurrentBet())
                 {
                     isBettingRoundOver = true;
                     break;
                 }
 
                 // Action
-                var gameState = BuildGameState();
+                var gameState = GetGameState();
                 var validMoves = gameState.PossibleMoves ?? throw new Exception();
                 PlayerInput input = _io.GetInput(gameState);
                 if (!validMoves.Contains(input.Move)) throw new Exception("Input not valid");
@@ -160,7 +168,7 @@ public class PokerEngine
                 else if (input.Move is PlayerMove.Check) currentPlayer.Check();
 
                 // After
-                if (CountPlayersThatCanAct() < 2 && EveryoneSettledAtCurrentBet())
+                if (CountPlayersThatCanAct() < 2 && IsEveryoneSettledAtCurrentBet())
                 {
                     isBettingRoundOver = true;
                     IsSkipToShowdown = true;
@@ -168,7 +176,7 @@ public class PokerEngine
                 }
 
                 // Move To Next Player
-                CurrentPlayerIndex = GetNextBlindIndex(CurrentPlayerIndex);
+                CurrentPlayerIndex = GetNextIndex(CurrentPlayerIndex);
             }
         }
 
@@ -227,7 +235,7 @@ public class PokerEngine
                     Console.WriteLine(item.WinningHand);
                 }
                 Console.WriteLine();
-                pot.Winners = MapWinners(winners);
+                pot.Winners = MapAlgoPlayersToEnginePlayers(winners);
             }
         }
         Console.WriteLine("\n--- PAY ---\n");
@@ -240,14 +248,15 @@ public class PokerEngine
     }
 
 
-    private List<EnginePlayer> MapWinners(List<Player> players)
+    private List<EnginePlayer> MapAlgoPlayersToEnginePlayers(List<Player> players)
     {
         List<EnginePlayer> enginePlayers = new(_players);
         enginePlayers = enginePlayers.Where(p => players.Find(p2 => p2.Name == p.Name) is not null).ToList();
+        Debug.Assert(enginePlayers.Count > 0, "No PokerAlgo players match any engine players");
         return enginePlayers;
     }
 
-    private List<Player> EnginePlayersToAlgoPlayers(List<EnginePlayer> enginePlayers)
+    private static List<Player> EnginePlayersToAlgoPlayers(List<EnginePlayer> enginePlayers)
     {
         List<Player> players = new();
         foreach (var ep in enginePlayers)
@@ -273,6 +282,7 @@ public class PokerEngine
         {
             moves.Add(PlayerMove.Check);
         }
+        // we count players that can act because we don't want to raise if another player is all-in
         if (AdditionalRaiseCount != EngineOptions.AdditionalRaises && CountPlayersThatCanAct() > 1) moves.Add(PlayerMove.Raise);
         return moves;
     }
@@ -283,11 +293,11 @@ public class PokerEngine
         {
             if (!p.HasFolded) return p;
         }
-        throw new Exception();
+        throw new Exception("No non-folded player");
     }
 
 
-    private bool EveryoneSettledAtCurrentBet()
+    private bool IsEveryoneSettledAtCurrentBet()
     {
         foreach (var p in _players)
         {
@@ -326,7 +336,7 @@ public class PokerEngine
         return count;
     }
 
-    private bool IsPlayerAllIn(EnginePlayer player)
+    private static bool IsPlayerAllIn(EnginePlayer player)
     {
         if (player.Stack == 0 && player.Bet == 0) throw new InternalPokerEngineException("Player has 0 stack and 0 bet");
         
@@ -344,11 +354,11 @@ public class PokerEngine
         AdditionalRaiseCount = 0;
     }
 
-    private void ResetTableHand()
+    private void ResetHand()
     {
         foreach (var p in _players)
         {
-            p.ResetTableHand();
+            p.ResetHand();
         }
         AdditionalRaiseCount = 0;
         IsOnePlayerLeft = false;
@@ -356,7 +366,7 @@ public class PokerEngine
     }
 
 
-    private GameState BuildGameState()
+    private GameState GetGameState()
     {
         List<PlayerState> playerStates = new();
         foreach (var player in _players)
@@ -378,15 +388,15 @@ public class PokerEngine
     }
 
 
-    private void AssignBlinds()
+    private void AdvanceBlinds()
     {
-        DealerIndex = GetNextBlindIndex(DealerIndex);
-        SbIndex = GetNextBlindIndex(DealerIndex);
-        BbIndex = GetNextBlindIndex(SbIndex);
-        CurrentPlayerIndex = GetNextBlindIndex(BbIndex);
+        DealerIndex = GetNextIndex(DealerIndex);
+        SbIndex = GetNextIndex(DealerIndex);
+        BbIndex = GetNextIndex(SbIndex);
+        CurrentPlayerIndex = GetNextIndex(BbIndex);
     }
 
-    private int GetNextBlindIndex(int index)
+    private int GetNextIndex(int index)
     {
         int temp = index + 1;
         if (temp > _players.Count - 1) temp = 0;
@@ -402,7 +412,9 @@ public class PokerEngine
         {
             Console.Write(_players.IndexOf(p) == CurrentPlayerIndex ? " ➡️  " : "");
             Console.Write(p);
-            Console.Write(_players.IndexOf(p) == DealerIndex ? "   🎃 DEALER" : _players.IndexOf(p) == SbIndex ? "   🥈 SMALL BLIND" : _players.IndexOf(p) == BbIndex ? "   🪙  BIG BLIND" : "");
+            Console.Write(_players.IndexOf(p) == DealerIndex ? "   🎃 DEALER" : "");
+            Console.Write(_players.IndexOf(p) == SbIndex ? "   🥈 SMALL BLIND" :  "");
+            Console.Write(_players.IndexOf(p) == BbIndex ? "   🪙  BIG BLIND" : "");
             Console.Write(p.HasFolded ? "   ⛔" : "");
             Console.WriteLine(!p.HasFolded && p.HasActed ? "  ✅" : "");
         }
