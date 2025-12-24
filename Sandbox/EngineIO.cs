@@ -10,7 +10,8 @@ public class EngineIO : IEngineIO
         _engine.PrintGameState();
         Console.WriteLine("IO Request");
         Console.WriteLine($"Output Type: {gameState.OutputType}");
-        Console.WriteLine( "Current Player: " + (gameState.PlayerToAct is not null ? gameState.PlayerToAct.Id : "null"));
+        Console.WriteLine("Current Player: " + (gameState.PlayerToAct is not null ? gameState.PlayerToAct.Id : "null"));
+        Console.WriteLine($"{nameof(_engine.AdditionalRaiseCount)}: {_engine.AdditionalRaiseCount}");
         Console.Write("Possible Moves: ");
         int count = 1;
         if (gameState.PossibleMoves is not null)
@@ -26,17 +27,20 @@ public class EngineIO : IEngineIO
         {
             Console.WriteLine("null");
         }
-        Console.WriteLine($"Min Bet: {gameState.MinBet}");
-        Console.WriteLine($"{nameof(_engine.AdditionalRaiseCount)}: {_engine.AdditionalRaiseCount}");
+        Console.WriteLine($"ToCall: {gameState.ToCall}");
         Console.WriteLine("Select your move:");
         string? moveIn = Console.ReadLine();
         if (string.IsNullOrEmpty(moveIn)) throw new Exception();
-        Console.WriteLine("Type amount:");
-        int amount = 0;
-        if (!int.TryParse(Console.ReadLine(), out amount)) throw new Exception();
         PlayerMove selectedMove = moves[int.Parse(moveIn)];
+
+        int amount = gameState.ToCall;
+        if(selectedMove is PlayerMove.Raise)
+        {
+            Console.WriteLine("ToCall + What Amount:");
+            if (!int.TryParse(Console.ReadLine(), out amount)) throw new Exception();
+        }
         
-        return new PlayerInput { Move = selectedMove, Amount = amount };
+        return new PlayerInput { Move = selectedMove, Amount = gameState.ToCall + amount };
     }
 
     public void SetEngine(PokerEngine engine)

@@ -8,5 +8,5 @@ public record GameState
     
     public PlayerState? PlayerToAct;
     public List<PlayerMove>? PossibleMoves;
-    public required int MinBet;
+    public required int ToCall;
 }

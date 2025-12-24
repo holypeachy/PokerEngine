@@ -2,6 +2,8 @@ namespace PokerEngine;
 
 public static class PotAlgo
 {
+    public static bool EnableDebugLog { get; set; } = true;
+
     class ChipTracker(EnginePlayer owner, int value, bool HasFolded)
     {
         public EnginePlayer Owner { get; } = owner;
@@ -10,7 +12,7 @@ public static class PotAlgo
 
         public override string ToString()
         {
-            return $"owner: {Owner.Name} | value: {Value} | folded: {HasFolded}";
+            return $"Owner: {Owner.Name} | Value: {Value} | Folded: {HasFolded}";
         }
     }
 
@@ -25,25 +27,29 @@ public static class PotAlgo
                 break;
             }
         }
-        if (atLeastOneNonFolded == false) throw new Exception();
+        if (atLeastOneNonFolded == false) throw new InternalPokerEngineException("GetPots() called when all players have folded.");
 
         List<ChipTracker> trackers = [];
         foreach (EnginePlayer p in players)
         {
             if (p.Bet != 0)
             {
+                if(p.Bet < 0) throw new InternalPokerEngineException($"Player {p.Name} has a negative bet value.");
                 trackers.Add(new ChipTracker(p, p.Bet, p.HasFolded));
             }
         }
 
-        if (trackers.Count == 0) throw new Exception();
+        if (trackers.Count == 0) throw new InternalPokerEngineException("GetPots() called when no players have bet anything.");
 
-        Console.WriteLine("\nTrackers:");
-        foreach (ChipTracker t in trackers)
+        if (EnableDebugLog)
         {
-            Console.WriteLine(t);
+            Console.WriteLine("Trackers:");
+            foreach (ChipTracker t in trackers)
+            {
+                Console.WriteLine(t);
+            }
+            Console.WriteLine();
         }
-        Console.WriteLine();
 
         return SplitPot(trackers);
     }
@@ -51,7 +57,10 @@ public static class PotAlgo
     private static List<Pot> SplitPot(List<ChipTracker> trackers)
     {
         // end condition
-        if (trackers.Count == 0) return [];
+        if (trackers.Count == 0) {
+            if (EnableDebugLog) Console.WriteLine("End of Recursion.");
+            return [];
+        }
 
         // pot splitting logic
         Pot pot;
@@ -85,6 +94,13 @@ public static class PotAlgo
         }
 
         pot = new Pot(potTotal + foldedTotal, potPlayers);
+        if (EnableDebugLog)
+        {
+            Console.WriteLine($"Current Number of Trackers: {trackers.Count}");
+            Console.WriteLine("Pot in Recursion:");
+            Console.WriteLine(pot);
+            Console.WriteLine();
+        }
 
         // prepare trackers for next recursion
         trackers.RemoveAll(t => t.Value == 0);
@@ -97,7 +113,6 @@ public static class PotAlgo
 
     private static int GetMin(List<ChipTracker> trackers)
     {
-        // add guard for if all remaining trackers are folded, should throw error
         int min = int.MaxValue;
         bool found = false;
 
@@ -109,8 +124,7 @@ public static class PotAlgo
             if (t.Value < min) min = t.Value;
         }
 
-        if (!found)
-            throw new InvalidOperationException("GetMin() called with no non-folded trackers remaining.");
+        if (!found) throw new InternalPokerEngineException("GetMin() called with no non-folded trackers remaining.");
 
         return min;
     }

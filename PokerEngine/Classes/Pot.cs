@@ -6,11 +6,12 @@ public class Pot(int value, List<EnginePlayer> players)
 {
     public List<EnginePlayer> Players { get; private set; } = players;
     public int Value { get; private set; } = value;
+    
     public List<EnginePlayer>? Winners { get; set; } = null;
 
     public void PayWinners()
     {
-        Debug.Assert(Winners is not null && Winners.Count > 0, "Winners should never be null when paying winners. This means we never determined the winners of this pot.");
+        if (Winners is null || Winners.Count == 0) throw new InvalidOperationException("Winners should never be null. This means we never determined the winners of this pot.");
 
         int split = Value / Winners.Count;
         foreach (var w in Winners)
@@ -22,9 +23,9 @@ public class Pot(int value, List<EnginePlayer> players)
     public override string ToString()
     {
         string players = "| ";
-        foreach (var item in Players)
+        foreach (var p in Players)
         {
-            players += item.Name + " | ";
+            players += p.Name + " | ";
         }
 
         string wString = string.Empty;
@@ -36,6 +37,6 @@ public class Pot(int value, List<EnginePlayer> players)
             }
         }
 
-        return $"players ({Players.Count}): {players}\nvalue: {Value}\nwinner(s):\n{wString}";
+        return $"Players ({Players.Count}): \n{players}\nValue: {Value}\nWinner(s):\n{wString}";
     }
 }

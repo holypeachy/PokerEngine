@@ -2,6 +2,6 @@ namespace PokerEngine;
 
 public record PlayerInput
 {
-    public PlayerMove Move;
+    public required PlayerMove Move;
     public int Amount;
 }

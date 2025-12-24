@@ -38,7 +38,5 @@ TODO: Add detailed and standardized logging, log to file as well
 * 
 
 * Changes
-* feat: EnginePlayer no longer inherits from PokerAlgo.Player
-* feat: implement betting round loop
-* feat: add PotAlgo
+* 
 */

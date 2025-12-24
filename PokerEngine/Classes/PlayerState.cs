@@ -2,8 +2,9 @@ namespace PokerEngine;
 
 public record PlayerState
 {
-    public string Id;
-    public Pair HoleCards;
-    public int Stack;
-    public int Bet;
+    public required string Id;
+    public required int Stack;
+    public required bool HasFolded;
+    public Pair? HoleCards;
+    public required int Bet;
 }
